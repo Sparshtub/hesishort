@@ -1,6 +1,9 @@
-# SnapLink — High-Throughput URL Shortener & Analytics Engine
+# SnapLink (HesiShort) — High-Throughput URL Shortener & Analytics Engine
 
-> A high-performance RESTful link shortening and telemetry ingestion microservice built with **Node.js, TypeScript, Express, MySQL, Redis, and Next.js**.
+> A high-performance RESTful link shortening and telemetry ingestion microservice built with **Node.js, TypeScript, Express, MySQL (TiDB Cloud), Redis (Upstash), and Tailwind CSS**.
+
+🚀 **Live Production Demo:** [https://hesishort.onrender.com](https://hesishort.onrender.com/)  
+📦 **GitHub Repository:** [https://github.com/Sparshtub/hesishort](https://github.com/Sparshtub/hesishort)
 
 ---
 
