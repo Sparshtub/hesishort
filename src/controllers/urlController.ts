@@ -5,16 +5,42 @@ import { redis } from '../config/redis';
 import { encodeBase62 } from '../utils/base62';
 import { ResultSetHeader, RowDataPacket } from 'mysql2';
 
-const CACHE_TTL_SECONDS = 86400; // 24 hours
-const BASE_URL = process.env.BASE_URL || 'http://localhost:4000';
+const MAX_CACHE_TTL_SECONDS = 86400; // 24 hours maximum
 
-function isValidUrl(urlString: string): boolean {
+/**
+ * Validates protocol and rejects redirect loops pointing back to HesiShort.
+ */
+function validateUrl(urlString: string, req: Request): { valid: boolean; reason?: string } {
   try {
     const parsed = new URL(urlString);
-    return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+      return { valid: false, reason: 'URL must use http:// or https:// protocol.' };
+    }
+
+    const targetHost = parsed.hostname.toLowerCase();
+    const currentHost = (req.get('host') || '').toLowerCase().split(':')[0];
+    const selfHosts = ['localhost', '127.0.0.1', 'hesishort.onrender.com', currentHost];
+
+    if (selfHosts.includes(targetHost)) {
+      return { valid: false, reason: 'Destination URL cannot point to HesiShort itself (prevents redirect loops).' };
+    }
+
+    return { valid: true };
   } catch {
-    return false;
+    return { valid: false, reason: 'Invalid destination URL format.' };
   }
+}
+
+/**
+ * Computes safe cache TTL: min(24h, remaining lifetime).
+ * Prevents caching expired links past their expiresAt boundary.
+ */
+function computeCacheTtlSeconds(expiresAt: Date | string | null): number {
+  if (!expiresAt) return MAX_CACHE_TTL_SECONDS;
+  const expiryMs = new Date(expiresAt).getTime();
+  const remainingSeconds = Math.floor((expiryMs - Date.now()) / 1000);
+  if (remainingSeconds <= 0) return 0; // Already expired
+  return Math.min(MAX_CACHE_TTL_SECONDS, remainingSeconds);
 }
 
 function hashIp(ip: string): string {
@@ -28,8 +54,14 @@ function hashIp(ip: string): string {
 export async function shortenUrl(req: Request, res: Response): Promise<void> {
   const { url, customAlias, expiresAt } = req.body;
 
-  if (!url || !isValidUrl(url)) {
-    res.status(400).json({ error: 'Invalid or missing URL. URL must start with http:// or https://' });
+  if (!url) {
+    res.status(400).json({ error: 'URL is required.' });
+    return;
+  }
+
+  const validation = validateUrl(url, req);
+  if (!validation.valid) {
+    res.status(400).json({ error: validation.reason });
     return;
   }
 
@@ -39,7 +71,7 @@ export async function shortenUrl(req: Request, res: Response): Promise<void> {
   if (expiresAt) {
     expirationDate = new Date(expiresAt);
     if (isNaN(expirationDate.getTime()) || expirationDate <= new Date()) {
-      res.status(400).json({ error: 'expiresAt must be a valid future ISO datetime string' });
+      res.status(400).json({ error: 'expiresAt must be a valid future ISO datetime string.' });
       return;
     }
   }
@@ -52,7 +84,7 @@ export async function shortenUrl(req: Request, res: Response): Promise<void> {
         return;
       }
 
-      // Check if alias exists
+      // Check if alias is already claimed
       const [existing] = await pool.query<RowDataPacket[]>(
         'SELECT id FROM urls WHERE short_code = ? LIMIT 1',
         [aliasClean]
@@ -69,7 +101,7 @@ export async function shortenUrl(req: Request, res: Response): Promise<void> {
       );
     } else {
       // Auto-increment ID + Base62 encoding
-      // First insert with a unique placeholder short_code to satisfy UNIQUE constraint
+      // Insert with a collision-free temporary placeholder
       const tempPlaceholder = `_t${crypto.randomBytes(4).toString('hex')}`;
       const [insertResult] = await pool.query<ResultSetHeader>(
         'INSERT INTO urls (short_code, original_url, expires_at) VALUES (?, ?, ?)',
@@ -77,14 +109,27 @@ export async function shortenUrl(req: Request, res: Response): Promise<void> {
       );
 
       const insertId = insertResult.insertId;
-      // Encode ID to Base62 (table AUTO_INCREMENT is offset by 100000, so short_code starts >= 4 chars)
       finalShortCode = encodeBase62(insertId);
+
+      // Guard: Check if a user previously claimed this exact short_code as a custom alias
+      const [aliasCollision] = await pool.query<RowDataPacket[]>(
+        'SELECT id FROM urls WHERE short_code = ? AND id != ? LIMIT 1',
+        [finalShortCode, insertId]
+      );
+
+      if (aliasCollision.length > 0) {
+        // Fallback salt to prevent duplicate key exception
+        finalShortCode = `${finalShortCode}_${crypto.randomBytes(2).toString('hex')}`;
+      }
 
       await pool.query('UPDATE urls SET short_code = ? WHERE id = ?', [finalShortCode, insertId]);
     }
 
-    // Warm cache in Redis
-    await redis.setex(`url:${finalShortCode}`, CACHE_TTL_SECONDS, url);
+    // Warm cache in Redis with safe expiry-bounded TTL
+    const cacheTtl = computeCacheTtlSeconds(expirationDate);
+    if (cacheTtl > 0) {
+      await redis.setex(`url:${finalShortCode}`, cacheTtl, url);
+    }
 
     const baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get('host')}`;
 
@@ -102,7 +147,7 @@ export async function shortenUrl(req: Request, res: Response): Promise<void> {
 
 /**
  * GET /:code
- * Fast Redirect with Cache-Aside and Async Ingestion
+ * Fast Redirect with Expiry-Aware Cache-Aside and Async Ingestion
  */
 export async function redirectUrl(req: Request, res: Response): Promise<void> {
   const code = req.params.code;
@@ -113,9 +158,10 @@ export async function redirectUrl(req: Request, res: Response): Promise<void> {
   }
 
   try {
-    const rawIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '127.0.0.1';
-    const clientIp = Array.isArray(rawIp) ? rawIp[0] : rawIp;
-    const ipHash = hashIp(clientIp);
+    // Client IP respecting trusted reverse proxies (Render / Cloudflare)
+    const clientIp = req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress || '127.0.0.1';
+    const ipString = Array.isArray(clientIp) ? clientIp[0] : clientIp;
+    const ipHash = hashIp(ipString);
     const userAgent = req.headers['user-agent'] || 'Unknown';
     const referrer = req.headers['referer'] || req.headers['referrer'] || 'Direct';
 
@@ -127,7 +173,7 @@ export async function redirectUrl(req: Request, res: Response): Promise<void> {
       referrer: referrer,
       clicked_at: new Date().toISOString().slice(0, 19).replace('T', ' '),
     });
-    // Fire-and-forget push to Redis queue
+
     redis.lpush('clicks_queue', telemetryPayload).catch((err) => {
       console.error('Telemetry queue push error:', err);
     });
@@ -153,14 +199,17 @@ export async function redirectUrl(req: Request, res: Response): Promise<void> {
 
     const { original_url, expires_at } = rows[0];
 
-    // Check expiration
+    // Check expiration before redirecting
     if (expires_at && new Date(expires_at) < new Date()) {
       res.status(410).send('This short link has expired.');
       return;
     }
 
-    // 4. Populate Redis Cache with 24-hr TTL
-    await redis.setex(`url:${code}`, CACHE_TTL_SECONDS, original_url);
+    // 4. Populate Redis Cache bounded by remaining link lifetime
+    const cacheTtl = computeCacheTtlSeconds(expires_at);
+    if (cacheTtl > 0) {
+      await redis.setex(`url:${code}`, cacheTtl, original_url);
+    }
 
     res.setHeader('X-Cache', 'MISS');
     res.redirect(302, original_url);
