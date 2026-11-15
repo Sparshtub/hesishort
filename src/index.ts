@@ -11,6 +11,9 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 4000;
 
+// Trust proxy for Render / Cloud reverse proxies (proper IP & HTTPS detection)
+app.set('trust proxy', 1);
+
 // Middleware
 app.use(express.json());
 app.use((req, res, next) => {

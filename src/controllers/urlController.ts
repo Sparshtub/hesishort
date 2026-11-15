@@ -86,8 +86,10 @@ export async function shortenUrl(req: Request, res: Response): Promise<void> {
     // Warm cache in Redis
     await redis.setex(`url:${finalShortCode}`, CACHE_TTL_SECONDS, url);
 
+    const baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get('host')}`;
+
     res.status(201).json({
-      shortUrl: `${BASE_URL}/${finalShortCode}`,
+      shortUrl: `${baseUrl}/${finalShortCode}`,
       shortCode: finalShortCode,
       originalUrl: url,
       expiresAt: expirationDate ? expirationDate.toISOString() : null,
