@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SnapLink — High-Throughput URL Shortener & Analytics</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col antialiased">
+  <!-- Navbar -->
+  <header class="border-b border-slate-800 bg-slate-900/60 backdrop-blur-md sticky top-0 z-50">
+    <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center shadow-lg shadow-blue-500/20 font-bold text-white text-lg">
+          ⚡
+        </div>
+        <span class="font-extrabold text-xl tracking-tight bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">SnapLink</span>
+        <span class="text-xs px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 font-medium">v1.0 Live</span>
+      </div>
+      <div class="flex items-center space-x-2 text-xs">
+        <span class="inline-flex items-center px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-medium">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5 animate-pulse"></span>
+          Redis + MySQL Connected
+        </span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero & Main -->
+  <main class="flex-1 max-w-4xl mx-auto w-full px-4 py-10 space-y-10">
+    <!-- Hero Title -->
+    <div class="text-center space-y-3">
+      <h1 class="text-4xl sm:text-5xl font-extrabold tracking-tight text-white">
+        High-Throughput <span class="bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">URL Shortener</span>
+      </h1>
+      <p class="text-slate-400 text-sm sm:text-base max-w-xl mx-auto">
+        Engineered with Base62 zero-collision encoding, sub-10ms Redis Cache-Aside redirects, and async batch click ingestion.
+      </p>
+    </div>
+
+    <!-- Shortener Card -->
+    <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-2xl backdrop-blur-sm relative overflow-hidden">
+      <div class="absolute -top-24 -right-24 w-48 h-48 bg-blue-600/10 rounded-full blur-3xl pointer-events-none"></div>
+      
+      <form id="shortenForm" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Destination URL</label>
+          <div class="relative">
+            <input 
+              type="url" 
+              id="originalUrl" 
+              placeholder="https://example.com/my-very-long-link..." 
+              required
+              class="w-full bg-slate-950 border border-slate-700/80 rounded-xl px-4 py-3.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+            >
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Custom Alias (Optional)</label>
+            <div class="flex rounded-xl bg-slate-950 border border-slate-700/80 overflow-hidden focus-within:ring-2 focus-within:ring-blue-500">
+              <span class="px-3 py-3 text-xs text-slate-500 bg-slate-900/80 border-r border-slate-800 select-none">/</span>
+              <input 
+                type="text" 
+                id="customAlias" 
+                placeholder="my-link" 
+                class="w-full bg-transparent px-3 py-3 text-sm text-white placeholder-slate-500 focus:outline-none"
+              >
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Expiration Date (Optional)</label>
+            <input 
+              type="datetime-local" 
+              id="expiresAt" 
+              class="w-full bg-slate-950 border border-slate-700/80 rounded-xl px-4 py-3 text-sm text-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+          </div>
+        </div>
+
+        <button 
+          type="submit" 
+          id="shortenBtn"
+          class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold py-3.5 px-6 rounded-xl transition shadow-lg shadow-blue-600/20 active:scale-[0.99] flex items-center justify-center space-x-2"
+        >
+          <span>Shorten URL</span>
+          <span>⚡</span>
+        </button>
+      </form>
+
+      <!-- Shorten Result Banner -->
+      <div id="resultBox" class="hidden mt-6 p-4 rounded-xl bg-slate-950/80 border border-slate-800 space-y-3">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-semibold text-emerald-400 uppercase tracking-wider">Short Link Created</span>
+          <span class="text-xs text-slate-500" id="resultExpires"></span>
+        </div>
+        <div class="flex items-center justify-between gap-3 bg-slate-900 p-3 rounded-lg border border-slate-800">
+          <a id="shortUrlLink" href="#" target="_blank" class="text-blue-400 hover:underline font-mono text-sm truncate"></a>
+          <div class="flex items-center space-x-2 shrink-0">
+            <button id="copyBtn" class="px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-800 hover:bg-slate-700 text-white transition">Copy</button>
+            <button id="viewStatsBtn" class="px-3 py-1.5 text-xs font-medium rounded-lg bg-blue-600/20 text-blue-400 hover:bg-blue-600/30 transition">Stats</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="errorBox" class="hidden mt-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-medium"></div>
+    </div>
+
+    <!-- Analytics Section -->
+    <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-2xl backdrop-blur-sm space-y-6">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-4 border-b border-slate-800">
+        <div>
+          <h2 class="text-xl font-bold text-white">Real-Time Telemetry & Analytics</h2>
+          <p class="text-xs text-slate-400 mt-0.5">Aggregated metrics stored asynchronously by the background click worker.</p>
+        </div>
+        <div class="flex items-center space-x-2">
+          <input 
+            type="text" 
+            id="analyticsCodeInput" 
+            placeholder="Enter code (e.g. q0U)" 
+            class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          >
+          <button 
+            id="fetchAnalyticsBtn" 
+            class="px-4 py-2 text-xs font-semibold bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition"
+          >
+            Lookup
+          </button>
+        </div>
+      </div>
+
+      <!-- Analytics Results Grid -->
+      <div id="analyticsContent" class="space-y-6">
+        <!-- Key Stats Cards -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div class="bg-slate-950/60 p-4 rounded-xl border border-slate-800/80">
+            <span class="text-xs text-slate-400 uppercase font-semibold">Total Clicks</span>
+            <p id="statTotalClicks" class="text-2xl font-extrabold text-white mt-1">--</p>
+          </div>
+          <div class="bg-slate-950/60 p-4 rounded-xl border border-slate-800/80">
+            <span class="text-xs text-slate-400 uppercase font-semibold">Short Code</span>
+            <p id="statShortCode" class="text-2xl font-extrabold text-blue-400 font-mono mt-1">--</p>
+          </div>
+          <div class="bg-slate-950/60 p-4 rounded-xl border border-slate-800/80 col-span-2">
+            <span class="text-xs text-slate-400 uppercase font-semibold">Destination URL</span>
+            <p id="statOriginalUrl" class="text-xs text-slate-300 font-mono mt-2 truncate">--</p>
+          </div>
+        </div>
+
+        <!-- Charts Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="bg-slate-950/60 p-4 rounded-xl border border-slate-800/80 space-y-3">
+            <span class="text-xs text-slate-400 uppercase font-semibold block">Clicks Over Time</span>
+            <div class="h-56">
+              <canvas id="timelineChart"></canvas>
+            </div>
+          </div>
+          <div class="bg-slate-950/60 p-4 rounded-xl border border-slate-800/80 space-y-3">
+            <span class="text-xs text-slate-400 uppercase font-semibold block">Browser Breakdown</span>
+            <div class="h-56 flex items-center justify-center">
+              <canvas id="browserChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Referrers List -->
+        <div class="bg-slate-950/60 p-4 rounded-xl border border-slate-800/80 space-y-3">
+          <span class="text-xs text-slate-400 uppercase font-semibold block">Top Referrers</span>
+          <div id="referrersList" class="space-y-2 text-xs">
+            <span class="text-slate-500 italic">No referrer data yet.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="border-t border-slate-900 py-6 text-center text-xs text-slate-500">
+    SnapLink &bull; MySQL 8.0 &bull; Redis 7 &bull; Express &bull; TypeScript
+  </footer>
+
+  <script>
+    let timelineChartInstance = null;
+    let browserChartInstance = null;
+
+    const shortenForm = document.getElementById('shortenForm');
+    const resultBox = document.getElementById('resultBox');
+    const errorBox = document.getElementById('errorBox');
+    const shortUrlLink = document.getElementById('shortUrlLink');
+    const copyBtn = document.getElementById('copyBtn');
+    const viewStatsBtn = document.getElementById('viewStatsBtn');
+    const analyticsInput = document.getElementById('analyticsCodeInput');
+    const fetchAnalyticsBtn = document.getElementById('fetchAnalyticsBtn');
+
+    let currentCode = '';
+
+    shortenForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errorBox.classList.add('hidden');
+      resultBox.classList.add('hidden');
+
+      const url = document.getElementById('originalUrl').value.trim();
+      const customAlias = document.getElementById('customAlias').value.trim();
+      const expiresAt = document.getElementById('expiresAt').value;
+
+      try {
+        const payload = { url };
+        if (customAlias) payload.customAlias = customAlias;
+        if (expiresAt) payload.expiresAt = new Date(expiresAt).toISOString();
+
+        const res = await fetch('/api/shorten', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || 'Failed to shorten link');
+        }
+
+        currentCode = data.shortCode;
+        shortUrlLink.href = data.shortUrl;
+        shortUrlLink.innerText = data.shortUrl;
+        document.getElementById('resultExpires').innerText = data.expiresAt ? 'Expires: ' + new Date(data.expiresAt).toLocaleDateString() : 'Permanent';
+        resultBox.classList.remove('hidden');
+
+        // Pre-fill analytics input
+        analyticsInput.value = currentCode;
+        loadAnalytics(currentCode);
+      } catch (err) {
+        errorBox.innerText = err.message;
+        errorBox.classList.remove('hidden');
+      }
+    });
+
+    copyBtn.addEventListener('click', () => {
+      navigator.clipboard.writeText(shortUrlLink.innerText);
+      copyBtn.innerText = 'Copied!';
+      setTimeout(() => { copyBtn.innerText = 'Copy'; }, 2000);
+    });
+
+    viewStatsBtn.addEventListener('click', () => {
+      if (currentCode) {
+        analyticsInput.value = currentCode;
+        loadAnalytics(currentCode);
+      }
+    });
+
+    fetchAnalyticsBtn.addEventListener('click', () => {
+      const code = analyticsInput.value.trim();
+      if (code) loadAnalytics(code);
+    });
+
+    async function loadAnalytics(code) {
+      try {
+        const res = await fetch(`/api/analytics/${code}`);
+        const data = await res.json();
+        if (!res.ok) {
+          alert(data.error || 'Analytics not found for code: ' + code);
+          return;
+        }
+
+        document.getElementById('statTotalClicks').innerText = data.totalClicks.toLocaleString();
+        document.getElementById('statShortCode').innerText = data.url.shortCode;
+        document.getElementById('statOriginalUrl').innerText = data.url.originalUrl;
+
+        // Render timeline
+        const dates = data.clicksPerDay.map(d => d.date);
+        const clicks = data.clicksPerDay.map(d => d.clicks);
+
+        if (timelineChartInstance) timelineChartInstance.destroy();
+        const ctxTimeline = document.getElementById('timelineChart').getContext('2d');
+        timelineChartInstance = new Chart(ctxTimeline, {
+          type: 'bar',
+          data: {
+            labels: dates.length ? dates : ['Today'],
+            datasets: [{
+              label: 'Clicks',
+              data: clicks.length ? clicks : [data.totalClicks],
+              backgroundColor: '#3b82f6',
+              borderRadius: 6
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              x: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } },
+              y: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8', stepSize: 1 } }
+            }
+          }
+        });
+
+        // Render browser doughnut
+        const browsers = data.browserBreakdown.map(b => b.browser);
+        const browserCounts = data.browserBreakdown.map(b => b.count);
+
+        if (browserChartInstance) browserChartInstance.destroy();
+        const ctxBrowser = document.getElementById('browserChart').getContext('2d');
+        browserChartInstance = new Chart(ctxBrowser, {
+          type: 'doughnut',
+          data: {
+            labels: browsers.length ? browsers : ['Direct'],
+            datasets: [{
+              data: browserCounts.length ? browserCounts : [1],
+              backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'],
+              borderWidth: 0
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { position: 'bottom', labels: { color: '#94a3b8', boxWidth: 10, font: { size: 10 } } }
+            }
+          }
+        });
+
+        // Referrers
+        const refList = document.getElementById('referrersList');
+        if (data.topReferrers && data.topReferrers.length) {
+          refList.innerHTML = data.topReferrers.map(r => `
+            <div class="flex items-center justify-between py-1 border-b border-slate-900">
+              <span class="text-slate-300">${r.referrer}</span>
+              <span class="font-mono text-slate-400 font-semibold">${r.count} click(s)</span>
+            </div>
+          `).join('');
+        } else {
+          refList.innerHTML = '<span class="text-slate-500 italic">No referrer data yet.</span>';
+        }
+
+      } catch (err) {
+        console.error('Analytics load error:', err);
+      }
+    }
+
+    // Load initial code if exists
+    window.addEventListener('DOMContentLoaded', () => {
+      loadAnalytics('q0U');
+    });
+  </script>
+</body>
+</html>
