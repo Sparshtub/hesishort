@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>HesiShort — Design-Grade URL Shortener & Telemetry</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="alternate icon" href="/favicon.ico">
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -55,16 +57,12 @@
   <header class="border-b border-black bg-white sticky top-0 z-50">
     <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
       <div class="flex items-center space-x-3">
-        <!-- Figma Multi-Color Shape Logo -->
-        <div class="flex items-center -space-x-1">
-          <span class="w-3.5 h-3.5 rounded-full bg-[#f3c9b6] border border-black inline-block"></span>
-          <span class="w-3.5 h-3.5 rounded-full bg-[#efd4d4] border border-black inline-block"></span>
-          <span class="w-3.5 h-3.5 rounded-full bg-[#c5b0f4] border border-black inline-block"></span>
-          <span class="w-3.5 h-3.5 rounded-full bg-[#c8e6cd] border border-black inline-block"></span>
-          <span class="w-3.5 h-3.5 rounded-full bg-[#dceeb1] border border-black inline-block"></span>
-        </div>
-        <span class="font-extrabold text-xl tracking-tight">HesiShort</span>
-        <span class="text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[#dceeb1] figma-pill">v1.0 Live</span>
+        <!-- HesiShort Logo -->
+        <a href="/" class="flex items-center space-x-3 group">
+          <img src="/logo.svg" alt="HesiShort Logo" class="w-9 h-9 transition-transform group-hover:scale-105 select-none">
+          <span class="font-extrabold text-xl tracking-tight">HesiShort</span>
+          <span class="text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[#dceeb1] figma-pill">v1.0 Live</span>
+        </a>
       </div>
 
       <div class="flex items-center space-x-3 text-xs">

@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" fill="none">
+  <!-- Hard Shadow -->
+  <rect x="6" y="6" width="52" height="52" rx="15" fill="#000000" />
+  <!-- Squircle Base Canvas -->
+  <rect x="4" y="4" width="52" height="52" rx="15" fill="#FFFFFF" stroke="#000000" stroke-width="3" />
+
+  <!-- Left Pill (Lilac) -->
+  <rect x="15" y="15" width="9" height="32" rx="4.5" fill="#C5B0F4" stroke="#000000" stroke-width="2.5" />
+
+  <!-- Right Pill (Lime) -->
+  <rect x="39" y="15" width="9" height="32" rx="4.5" fill="#DCEEB1" stroke="#000000" stroke-width="2.5" />
+
+  <!-- Center Fast Compression Bolt (Coral) -->
+  <path d="M20 28 L37 23 L32 34 L45 34 L27 46 L31 36 L20 36 Z" fill="#F3C9B6" stroke="#000000" stroke-width="2.5" stroke-linejoin="round" />
+
+  <!-- Accent Dot (Magenta) -->
+  <circle cx="44" cy="11" r="3.5" fill="#FF3D8B" stroke="#000000" stroke-width="1.5" />
+</svg>
