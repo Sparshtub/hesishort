@@ -3,85 +3,140 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SnapLink — High-Throughput URL Shortener & Analytics</title>
+  <title>HesiShort — Design-Grade URL Shortener & Telemetry</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
   <style>
-    body { font-family: 'Inter', sans-serif; }
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: #f7f7f5;
+      color: #000000;
+    }
+    .font-mono-code {
+      font-family: 'Space Mono', monospace;
+    }
+    /* Figma-style Neo-Editorial Hard Shadow */
+    .figma-frame {
+      background: #ffffff;
+      border: 1.5px solid #000000;
+      box-shadow: 4px 4px 0px #000000;
+    }
+    .figma-frame-sm {
+      background: #ffffff;
+      border: 1.5px solid #000000;
+      box-shadow: 2.5px 2.5px 0px #000000;
+    }
+    .figma-btn-primary {
+      background: #000000;
+      color: #ffffff;
+      border: 1.5px solid #000000;
+      box-shadow: 3px 3px 0px #000000;
+      transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .figma-btn-primary:hover {
+      background: #222222;
+      transform: translate(-1px, -1px);
+      box-shadow: 4px 4px 0px #000000;
+    }
+    .figma-btn-primary:active {
+      transform: translate(2px, 2px);
+      box-shadow: 1px 1px 0px #000000;
+    }
+    .figma-pill {
+      border: 1px solid #000000;
+    }
   </style>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col antialiased">
-  <!-- Navbar -->
-  <header class="border-b border-slate-800 bg-slate-900/60 backdrop-blur-md sticky top-0 z-50">
+<body class="min-h-screen flex flex-col antialiased">
+  <!-- Top Navigation (Figma Minimal Header) -->
+  <header class="border-b border-black bg-white sticky top-0 z-50">
     <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
       <div class="flex items-center space-x-3">
-        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center shadow-lg shadow-blue-500/20 font-bold text-white text-lg">
-          ⚡
+        <!-- Figma Multi-Color Shape Logo -->
+        <div class="flex items-center -space-x-1">
+          <span class="w-3.5 h-3.5 rounded-full bg-[#f3c9b6] border border-black inline-block"></span>
+          <span class="w-3.5 h-3.5 rounded-full bg-[#efd4d4] border border-black inline-block"></span>
+          <span class="w-3.5 h-3.5 rounded-full bg-[#c5b0f4] border border-black inline-block"></span>
+          <span class="w-3.5 h-3.5 rounded-full bg-[#c8e6cd] border border-black inline-block"></span>
+          <span class="w-3.5 h-3.5 rounded-full bg-[#dceeb1] border border-black inline-block"></span>
         </div>
-        <span class="font-extrabold text-xl tracking-tight bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">SnapLink</span>
-        <span class="text-xs px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 font-medium">v1.0 Live</span>
+        <span class="font-extrabold text-xl tracking-tight">HesiShort</span>
+        <span class="text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[#dceeb1] figma-pill">v1.0 Live</span>
       </div>
-      <div class="flex items-center space-x-2 text-xs">
-        <span class="inline-flex items-center px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-medium">
-          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5 animate-pulse"></span>
-          Redis + MySQL Connected
+
+      <div class="flex items-center space-x-3 text-xs">
+        <a 
+          href="https://github.com/Sparshtub/hesishort" 
+          target="_blank" 
+          class="hidden sm:inline-flex items-center px-3 py-1.5 rounded-full bg-white border border-black hover:bg-neutral-100 font-semibold transition"
+        >
+          <span>GitHub</span>
+          <span class="ml-1 text-[10px]">↗</span>
+        </a>
+        <span class="inline-flex items-center px-3 py-1.5 rounded-full bg-[#c8e6cd] figma-pill font-semibold">
+          <span class="w-2 h-2 rounded-full bg-emerald-600 mr-1.5 animate-pulse"></span>
+          Connected
         </span>
       </div>
     </div>
   </header>
 
-  <!-- Hero & Main -->
-  <main class="flex-1 max-w-4xl mx-auto w-full px-4 py-10 space-y-10">
+  <!-- Main Canvas -->
+  <main class="flex-1 max-w-4xl mx-auto w-full px-4 py-12 space-y-12">
     <!-- Hero Title -->
-    <div class="text-center space-y-3">
-      <h1 class="text-4xl sm:text-5xl font-extrabold tracking-tight text-white">
-        High-Throughput <span class="bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">URL Shortener</span>
+    <div class="text-center space-y-4">
+      <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-[#c5b0f4] figma-pill text-xs font-bold tracking-tight">
+        <span>⚡ Design-grade speed &bull; Sub-10ms Redis Cache-Aside</span>
+      </div>
+      <h1 class="text-4xl sm:text-6xl font-extrabold tracking-tight text-black leading-[1.08]">
+        Every link, <span class="bg-[#dceeb1] px-2 py-0.5 rounded-lg border border-black inline-block">shortened</span> with precision.
       </h1>
-      <p class="text-slate-400 text-sm sm:text-base max-w-xl mx-auto">
-        Engineered with Base62 zero-collision encoding, sub-10ms Redis Cache-Aside redirects, and async batch click ingestion.
+      <p class="text-neutral-600 text-sm sm:text-base max-w-xl mx-auto font-medium">
+        Deterministic Base62 collision-free keys, asynchronous telemetry batch worker, and live aggregated click analytics.
       </p>
     </div>
 
-    <!-- Shortener Card -->
-    <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-2xl backdrop-blur-sm relative overflow-hidden">
-      <div class="absolute -top-24 -right-24 w-48 h-48 bg-blue-600/10 rounded-full blur-3xl pointer-events-none"></div>
-      
-      <form id="shortenForm" class="space-y-4">
+    <!-- Shortener Card (Figma Canvas Frame) -->
+    <div class="figma-frame rounded-2xl p-6 sm:p-9 relative">
+      <!-- Decorative sticky corner tag -->
+      <div class="absolute -top-3.5 right-6 bg-[#f4ecd6] figma-pill text-[11px] font-bold px-3 py-0.5 rounded-full uppercase tracking-wider">
+        URL Compressor
+      </div>
+
+      <form id="shortenForm" class="space-y-5">
         <div>
-          <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Destination URL</label>
-          <div class="relative">
-            <input 
-              type="url" 
-              id="originalUrl" 
-              placeholder="https://example.com/my-very-long-link..." 
-              required
-              class="w-full bg-slate-950 border border-slate-700/80 rounded-xl px-4 py-3.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-            >
-          </div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-black mb-2">Destination URL</label>
+          <input 
+            type="url" 
+            id="originalUrl" 
+            placeholder="https://your-website.com/long-portfolio-url-or-article..." 
+            required
+            class="w-full bg-[#fbfbfa] border-1.5 border-black rounded-xl px-4 py-3.5 text-sm text-black placeholder-neutral-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-black border border-black transition font-medium"
+          >
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Custom Alias (Optional)</label>
-            <div class="flex rounded-xl bg-slate-950 border border-slate-700/80 overflow-hidden focus-within:ring-2 focus-within:ring-blue-500">
-              <span class="px-3 py-3 text-xs text-slate-500 bg-slate-900/80 border-r border-slate-800 select-none">/</span>
+            <label class="block text-xs font-bold uppercase tracking-wider text-black mb-2">Custom Alias (Optional)</label>
+            <div class="flex rounded-xl bg-[#fbfbfa] border border-black overflow-hidden focus-within:ring-2 focus-within:ring-black">
+              <span class="px-3.5 py-3 text-xs font-bold bg-[#f4ecd6] border-r border-black select-none">/</span>
               <input 
                 type="text" 
                 id="customAlias" 
                 placeholder="my-link" 
-                class="w-full bg-transparent px-3 py-3 text-sm text-white placeholder-slate-500 focus:outline-none"
+                class="w-full bg-transparent px-3 py-3 text-sm text-black placeholder-neutral-400 focus:outline-none font-medium"
               >
             </div>
           </div>
           <div>
-            <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Expiration Date (Optional)</label>
+            <label class="block text-xs font-bold uppercase tracking-wider text-black mb-2">Expiration Date (Optional)</label>
             <input 
               type="datetime-local" 
               id="expiresAt" 
-              class="w-full bg-slate-950 border border-slate-700/80 rounded-xl px-4 py-3 text-sm text-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              class="w-full bg-[#fbfbfa] border border-black rounded-xl px-4 py-3 text-sm text-black focus:outline-none focus:ring-2 focus:ring-black font-medium"
             >
           </div>
         </div>
@@ -89,101 +144,109 @@
         <button 
           type="submit" 
           id="shortenBtn"
-          class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold py-3.5 px-6 rounded-xl transition shadow-lg shadow-blue-600/20 active:scale-[0.99] flex items-center justify-center space-x-2"
+          class="w-full figma-btn-primary font-bold py-3.5 px-6 rounded-full text-sm cursor-pointer flex items-center justify-center space-x-2"
         >
           <span>Shorten URL</span>
-          <span>⚡</span>
+          <span class="text-xs">→</span>
         </button>
       </form>
 
-      <!-- Shorten Result Banner -->
-      <div id="resultBox" class="hidden mt-6 p-4 rounded-xl bg-slate-950/80 border border-slate-800 space-y-3">
+      <!-- Shorten Result Frame -->
+      <div id="resultBox" class="hidden mt-6 p-5 rounded-xl bg-[#dceeb1] border border-black space-y-3">
         <div class="flex items-center justify-between">
-          <span class="text-xs font-semibold text-emerald-400 uppercase tracking-wider">Short Link Created</span>
-          <span class="text-xs text-slate-500" id="resultExpires"></span>
+          <span class="text-xs font-bold uppercase tracking-wider text-black">✓ Short Link Ready</span>
+          <span class="text-xs font-bold text-neutral-800" id="resultExpires"></span>
         </div>
-        <div class="flex items-center justify-between gap-3 bg-slate-900 p-3 rounded-lg border border-slate-800">
-          <a id="shortUrlLink" href="#" target="_blank" class="text-blue-400 hover:underline font-mono text-sm truncate"></a>
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-3.5 rounded-lg border border-black">
+          <a id="shortUrlLink" href="#" target="_blank" class="text-black font-bold font-mono-code text-sm truncate hover:underline"></a>
           <div class="flex items-center space-x-2 shrink-0">
-            <button id="copyBtn" class="px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-800 hover:bg-slate-700 text-white transition">Copy</button>
-            <button id="viewStatsBtn" class="px-3 py-1.5 text-xs font-medium rounded-lg bg-blue-600/20 text-blue-400 hover:bg-blue-600/30 transition">Stats</button>
+            <button id="copyBtn" class="px-3.5 py-1.5 text-xs font-bold rounded-full bg-black text-white hover:bg-neutral-800 transition">Copy</button>
+            <button id="viewStatsBtn" class="px-3.5 py-1.5 text-xs font-bold rounded-full bg-[#c5b0f4] border border-black hover:bg-[#b79ff0] transition">Stats</button>
           </div>
         </div>
       </div>
 
-      <div id="errorBox" class="hidden mt-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-medium"></div>
+      <div id="errorBox" class="hidden mt-4 p-3 rounded-xl bg-[#efd4d4] border border-black text-black text-xs font-bold"></div>
     </div>
 
-    <!-- Analytics Section -->
-    <div class="bg-slate-900/70 border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-2xl backdrop-blur-sm space-y-6">
-      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-4 border-b border-slate-800">
+    <!-- Analytics Section (Figma Pastel Dashboard) -->
+    <div class="figma-frame rounded-2xl p-6 sm:p-9 space-y-6">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-black">
         <div>
-          <h2 class="text-xl font-bold text-white">Real-Time Telemetry & Analytics</h2>
-          <p class="text-xs text-slate-400 mt-0.5">Aggregated metrics stored asynchronously by the background click worker.</p>
+          <div class="flex items-center space-x-2">
+            <span class="w-3 h-3 rounded-full bg-[#c5b0f4] border border-black"></span>
+            <h2 class="text-xl font-extrabold text-black tracking-tight">Real-Time Telemetry & Analytics</h2>
+          </div>
+          <p class="text-xs text-neutral-600 mt-1 font-medium">Asynchronous batch telemetry processed by our background Redis queue worker.</p>
         </div>
         <div class="flex items-center space-x-2">
           <input 
             type="text" 
             id="analyticsCodeInput" 
-            placeholder="Enter code (e.g. q0U)" 
-            class="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            placeholder="Code (e.g. repo)" 
+            class="bg-[#fbfbfa] border border-black rounded-full px-3.5 py-2 text-xs text-black placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-black font-medium"
           >
           <button 
             id="fetchAnalyticsBtn" 
-            class="px-4 py-2 text-xs font-semibold bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition"
+            class="px-4 py-2 text-xs font-bold bg-black text-white rounded-full hover:bg-neutral-800 transition border border-black cursor-pointer"
           >
             Lookup
           </button>
         </div>
       </div>
 
-      <!-- Analytics Results Grid -->
+      <!-- Stats Grid -->
       <div id="analyticsContent" class="space-y-6">
-        <!-- Key Stats Cards -->
+        <!-- 3 Key Metric Cards in Figma Pastel Blocks -->
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <div class="bg-slate-950/60 p-4 rounded-xl border border-slate-800/80">
-            <span class="text-xs text-slate-400 uppercase font-semibold">Total Clicks</span>
-            <p id="statTotalClicks" class="text-2xl font-extrabold text-white mt-1">--</p>
+          <div class="bg-[#dceeb1] p-4 rounded-xl border border-black">
+            <span class="text-[11px] text-neutral-800 uppercase font-bold tracking-wider">Total Clicks</span>
+            <p id="statTotalClicks" class="text-3xl font-extrabold text-black mt-1">--</p>
           </div>
-          <div class="bg-slate-950/60 p-4 rounded-xl border border-slate-800/80">
-            <span class="text-xs text-slate-400 uppercase font-semibold">Short Code</span>
-            <p id="statShortCode" class="text-2xl font-extrabold text-blue-400 font-mono mt-1">--</p>
+          <div class="bg-[#c5b0f4] p-4 rounded-xl border border-black">
+            <span class="text-[11px] text-neutral-800 uppercase font-bold tracking-wider">Short Code</span>
+            <p id="statShortCode" class="text-2xl font-extrabold text-black font-mono-code mt-1 truncate">--</p>
           </div>
-          <div class="bg-slate-950/60 p-4 rounded-xl border border-slate-800/80 col-span-2">
-            <span class="text-xs text-slate-400 uppercase font-semibold">Destination URL</span>
-            <p id="statOriginalUrl" class="text-xs text-slate-300 font-mono mt-2 truncate">--</p>
+          <div class="bg-[#f4ecd6] p-4 rounded-xl border border-black col-span-2">
+            <span class="text-[11px] text-neutral-800 uppercase font-bold tracking-wider">Destination URL</span>
+            <p id="statOriginalUrl" class="text-xs text-black font-mono-code mt-2 truncate font-medium">--</p>
           </div>
         </div>
 
-        <!-- Charts Grid -->
+        <!-- Charts Grid (Clean Canvas Look) -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div class="bg-slate-950/60 p-4 rounded-xl border border-slate-800/80 space-y-3">
-            <span class="text-xs text-slate-400 uppercase font-semibold block">Clicks Over Time</span>
+          <div class="figma-frame-sm p-5 rounded-xl space-y-3">
+            <span class="text-xs font-bold uppercase tracking-wider text-black block">Clicks Over Time</span>
             <div class="h-56">
               <canvas id="timelineChart"></canvas>
             </div>
           </div>
-          <div class="bg-slate-950/60 p-4 rounded-xl border border-slate-800/80 space-y-3">
-            <span class="text-xs text-slate-400 uppercase font-semibold block">Browser Breakdown</span>
+          <div class="figma-frame-sm p-5 rounded-xl space-y-3">
+            <span class="text-xs font-bold uppercase tracking-wider text-black block">Browser Breakdown</span>
             <div class="h-56 flex items-center justify-center">
               <canvas id="browserChart"></canvas>
             </div>
           </div>
         </div>
 
-        <!-- Referrers List -->
-        <div class="bg-slate-950/60 p-4 rounded-xl border border-slate-800/80 space-y-3">
-          <span class="text-xs text-slate-400 uppercase font-semibold block">Top Referrers</span>
-          <div id="referrersList" class="space-y-2 text-xs">
-            <span class="text-slate-500 italic">No referrer data yet.</span>
+        <!-- Referrers Box -->
+        <div class="figma-frame-sm p-5 rounded-xl space-y-3">
+          <span class="text-xs font-bold uppercase tracking-wider text-black block">Top Referrers</span>
+          <div id="referrersList" class="space-y-2 text-xs font-medium">
+            <span class="text-neutral-500 italic">No referrer data yet.</span>
           </div>
         </div>
       </div>
     </div>
   </main>
 
-  <footer class="border-t border-slate-900 py-6 text-center text-xs text-slate-500">
-    SnapLink &bull; MySQL 8.0 &bull; Redis 7 &bull; Express &bull; TypeScript
+  <!-- Editorial Footer -->
+  <footer class="border-t border-black bg-white py-6 text-center text-xs font-medium text-neutral-600">
+    <div class="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+      <span class="font-bold text-black">HesiShort &bull; Production Engine</span>
+      <span>Designed with Figma design system specs &bull; Powered by Upstash Redis & TiDB Cloud</span>
+      <a href="https://github.com/Sparshtub/hesishort" target="_blank" class="text-black font-bold hover:underline">GitHub Repository ↗</a>
+    </div>
   </footer>
 
   <script>
@@ -199,7 +262,7 @@
     const analyticsInput = document.getElementById('analyticsCodeInput');
     const fetchAnalyticsBtn = document.getElementById('fetchAnalyticsBtn');
 
-    let currentCode = '';
+    let currentCode = 'repo';
 
     shortenForm.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -232,7 +295,6 @@
         document.getElementById('resultExpires').innerText = data.expiresAt ? 'Expires: ' + new Date(data.expiresAt).toLocaleDateString() : 'Permanent';
         resultBox.classList.remove('hidden');
 
-        // Pre-fill analytics input
         analyticsInput.value = currentCode;
         loadAnalytics(currentCode);
       } catch (err) {
@@ -272,7 +334,7 @@
         document.getElementById('statShortCode').innerText = data.url.shortCode;
         document.getElementById('statOriginalUrl').innerText = data.url.originalUrl;
 
-        // Render timeline
+        // Render timeline with Figma Palette
         const dates = data.clicksPerDay.map(d => d.date);
         const clicks = data.clicksPerDay.map(d => d.clicks);
 
@@ -285,8 +347,10 @@
             datasets: [{
               label: 'Clicks',
               data: clicks.length ? clicks : [data.totalClicks],
-              backgroundColor: '#3b82f6',
-              borderRadius: 6
+              backgroundColor: '#000000',
+              borderRadius: 6,
+              borderWidth: 1,
+              borderColor: '#000000'
             }]
           },
           options: {
@@ -294,13 +358,13 @@
             maintainAspectRatio: false,
             plugins: { legend: { display: false } },
             scales: {
-              x: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } },
-              y: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8', stepSize: 1 } }
+              x: { grid: { display: false }, ticks: { color: '#000000', font: { weight: 'bold' } } },
+              y: { grid: { color: '#e6e6e6' }, ticks: { color: '#000000', font: { weight: 'bold' }, stepSize: 1 } }
             }
           }
         });
 
-        // Render browser doughnut
+        // Render browser doughnut with Figma Pastels
         const browsers = data.browserBreakdown.map(b => b.browser);
         const browserCounts = data.browserBreakdown.map(b => b.count);
 
@@ -312,15 +376,16 @@
             labels: browsers.length ? browsers : ['Direct'],
             datasets: [{
               data: browserCounts.length ? browserCounts : [1],
-              backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'],
-              borderWidth: 0
+              backgroundColor: ['#c5b0f4', '#dceeb1', '#f3c9b6', '#efd4d4', '#c8e6cd'],
+              borderColor: '#000000',
+              borderWidth: 1.5
             }]
           },
           options: {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-              legend: { position: 'bottom', labels: { color: '#94a3b8', boxWidth: 10, font: { size: 10 } } }
+              legend: { position: 'bottom', labels: { color: '#000000', boxWidth: 12, font: { weight: 'bold', size: 11 } } }
             }
           }
         });
@@ -329,13 +394,13 @@
         const refList = document.getElementById('referrersList');
         if (data.topReferrers && data.topReferrers.length) {
           refList.innerHTML = data.topReferrers.map(r => `
-            <div class="flex items-center justify-between py-1 border-b border-slate-900">
-              <span class="text-slate-300">${r.referrer}</span>
-              <span class="font-mono text-slate-400 font-semibold">${r.count} click(s)</span>
+            <div class="flex items-center justify-between py-1.5 border-b border-neutral-200">
+              <span class="text-neutral-800 font-semibold">${r.referrer}</span>
+              <span class="font-mono-code text-black font-bold">${r.count} click(s)</span>
             </div>
           `).join('');
         } else {
-          refList.innerHTML = '<span class="text-slate-500 italic">No referrer data yet.</span>';
+          refList.innerHTML = '<span class="text-neutral-500 italic">No referrer data yet.</span>';
         }
 
       } catch (err) {
@@ -343,9 +408,9 @@
       }
     }
 
-    // Load initial code if exists
+    // Auto load the initial demo link
     window.addEventListener('DOMContentLoaded', () => {
-      loadAnalytics('q0U');
+      loadAnalytics('repo');
     });
   </script>
 </body>

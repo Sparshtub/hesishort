@@ -57,7 +57,7 @@ async function bootstrap() {
   startClickWorker();
 
   const server = app.listen(PORT, () => {
-    console.log(`🚀 SnapLink API running on http://localhost:${PORT}`);
+    console.log(`🚀 HesiShort API running on http://localhost:${PORT}`);
   });
 
   // Graceful shutdown

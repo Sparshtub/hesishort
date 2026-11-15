@@ -1,7 +1,7 @@
 {
-  "name": "snaplink",
+  "name": "hesishort",
   "version": "1.0.0",
-  "description": "High-Throughput URL Shortener & Analytics Engine with Redis Caching and Asynchronous Ingestion",
+  "description": "HesiShort — High-Throughput URL Shortener & Analytics Engine with Redis Caching and Asynchronous Ingestion",
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
