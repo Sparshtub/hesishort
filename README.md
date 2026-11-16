@@ -9,8 +9,13 @@
 <p align="center">
   <a href="https://hesishort.onrender.com/">🚀 <strong>Live Production Demo</strong></a> &bull;
   <a href="https://github.com/Sparshtub/hesishort">📦 <strong>GitHub Repo</strong></a> &bull;
-  <a href="https://hesishort.onrender.com/health">🩺 <strong>Health Check</strong></a>
+  <a href="https://hesishort.onrender.com/health">🩺 <strong>Health Check</strong></a> &bull;
+  <a href="DESIGN.md">🎨 <strong>Figma Design Tokens</strong></a> &bull;
+  <a href="LICENSE">📄 <strong>MIT License</strong></a>
 </p>
+
+> [!NOTE]
+> **Cloud Cold Start Notice:** On Render’s free tier, the web service spins down after 15 minutes of inactivity. If visiting after a period of dormancy, the initial wake-up request may take 30–50 seconds while the container boots. Subsequent redirects are served from Redis memory in sub-10ms.
 
 ---
 

@@ -6,6 +6,20 @@ import { encodeBase62 } from '../utils/base62';
 import { ResultSetHeader, RowDataPacket } from 'mysql2';
 
 const MAX_CACHE_TTL_SECONDS = 86400; // 24 hours maximum
+const RESERVED_ALIASES = new Set([
+  'api',
+  'health',
+  'favicon.ico',
+  'robots.txt',
+  'dashboard',
+  'public',
+  'static',
+  'admin',
+  'metrics',
+  'index.html',
+  'logo.svg',
+  'favicon.svg',
+]);
 
 /**
  * Validates protocol and rejects redirect loops pointing back to HesiShort.
@@ -81,6 +95,11 @@ export async function shortenUrl(req: Request, res: Response): Promise<void> {
       const aliasClean = customAlias.trim();
       if (!/^[a-zA-Z0-9_-]{3,20}$/.test(aliasClean)) {
         res.status(400).json({ error: 'Custom alias must be 3-20 alphanumeric characters (or _, -).' });
+        return;
+      }
+
+      if (RESERVED_ALIASES.has(aliasClean.toLowerCase())) {
+        res.status(400).json({ error: `"${aliasClean}" is a reserved system route and cannot be used as an alias.` });
         return;
       }
 
