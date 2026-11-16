@@ -48,6 +48,7 @@ export default function HesiShortDashboard() {
   const [searchCode, setSearchCode] = useState('repo');
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
+  const [analyticsError, setAnalyticsError] = useState('');
   const [copied, setCopied] = useState(false);
 
   // Dynamic API Base URL (Relative for same-host, fallback to env or localhost)
@@ -100,6 +101,7 @@ export default function HesiShortDashboard() {
     const cleanCode = code.trim();
     if (!cleanCode) return;
     setAnalyticsLoading(true);
+    setAnalyticsError('');
     try {
       const res = await fetch(`${apiBase}/api/analytics/${cleanCode}`);
       const data = await res.json();
@@ -107,19 +109,32 @@ export default function HesiShortDashboard() {
         setAnalytics(data);
         setSearchCode(cleanCode);
       } else {
-        alert(data.error || `No analytics found for code "${cleanCode}"`);
+        setAnalyticsError(data.error || `No analytics found for code "${cleanCode}"`);
       }
-    } catch (err) {
-      console.error('Failed to fetch analytics:', err);
+    } catch (err: any) {
+      setAnalyticsError(err.message || 'Failed to fetch analytics');
     } finally {
       setAnalyticsLoading(false);
     }
   };
 
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  const copyToClipboard = async (text: string) => {
+    try {
+      if (typeof navigator !== 'undefined' && navigator.clipboard) {
+        await navigator.clipboard.writeText(text);
+      } else {
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+      }
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // ignore copy errors
+    }
   };
 
   return (
@@ -318,6 +333,12 @@ export default function HesiShortDashboard() {
               </button>
             </div>
           </div>
+
+          {analyticsError && (
+            <div className="p-3 rounded-xl bg-[#EFD4D4] border border-black text-black text-xs font-bold">
+              {analyticsError}
+            </div>
+          )}
 
           {/* Stats Grid */}
           {analytics ? (
